@@ -1,9 +1,15 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:provider/provider.dart';
 import 'package:verificacion/models/ResponseDispe.dart';
+import 'package:verificacion/models/ResponseReporteRS.dart';
+import 'package:verificacion/providers/reporte_servicio_provider.dart';
 import 'package:verificacion/screens/screen_BE.dart';
 import 'package:verificacion/screens/screen_RI.dart';
 import 'package:verificacion/screens/screen_RS.dart';
+import 'package:http/http.dart' as http;
 
 class ScreenOrdenTrabajo extends StatelessWidget {
   Estacion estacion;
@@ -14,6 +20,9 @@ class ScreenOrdenTrabajo extends StatelessWidget {
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
+
+    ReporteServicioProvider reporte =
+        Provider.of<ReporteServicioProvider>(context);
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -50,7 +59,7 @@ class ScreenOrdenTrabajo extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: _mostrarDipensarios(
-                          dispensario, context, width, height),
+                          dispensario, context, width, height, reporte),
                     )),
               ],
             ),
@@ -60,8 +69,8 @@ class ScreenOrdenTrabajo extends StatelessWidget {
     );
   }
 
-  List<Widget> _mostrarDipensarios(
-      List<Dispensario> disp, context, width, height) {
+  List<Widget> _mostrarDipensarios(List<Dispensario> disp, context, width,
+      height, ReporteServicioProvider reporte) {
     List<Widget> dispensarios = [];
 
     for (var element in disp) {
@@ -83,12 +92,34 @@ class ScreenOrdenTrabajo extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 GestureDetector(
-                                  onTap: () {
-                                    Navigator.of(context).pop();
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (_) => ScreenRS(element)));
+                                  onTap: () async {
+                                    ReporteServicio? resp =
+                                        await _crearReporteServicio(
+                                            element, reporte, context);
+                                    if (resp!.status!) {
+                                      Navigator.of(context).pop();
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (_) =>
+                                                  ScreenRS(element)));
+                                    } else {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                            backgroundColor: Colors.red,
+                                            content: Container(
+                                              height: 80,
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                children: [
+                                                  Text('Ocurrio un error...')
+                                                ],
+                                              ),
+                                            )),
+                                      );
+                                    }
                                   },
                                   child: Container(
                                     decoration:
@@ -208,9 +239,15 @@ class ScreenOrdenTrabajo extends StatelessWidget {
                       height: 30,
                       child: Text("RS"),
                       decoration: BoxDecoration(
-                        color: Colors.amber,
-                        borderRadius: BorderRadius.circular(5),
-                      ),
+                          color: element.rs == "PENDIENTE"
+                              ? Colors.white
+                              : element.rs == "EN PROCESO"
+                                  ? Colors.amber
+                                  : Colors.green,
+                          borderRadius: BorderRadius.circular(5),
+                          border: Border.all(
+                            width: 1.0,
+                          )),
                     ),
                     Container(
                       alignment: Alignment.center,
@@ -219,7 +256,10 @@ class ScreenOrdenTrabajo extends StatelessWidget {
                       child: Text("BE"),
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5),
-                          color: Colors.amber),
+                          color: Colors.white,
+                          border: Border.all(
+                            width: 1.0,
+                          )),
                     ),
                     Container(
                       alignment: Alignment.center,
@@ -227,9 +267,11 @@ class ScreenOrdenTrabajo extends StatelessWidget {
                       height: 30,
                       child: Text("RI"),
                       decoration: BoxDecoration(
-                        color: Colors.amber,
-                        borderRadius: BorderRadius.circular(5),
-                      ),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(5),
+                          border: Border.all(
+                            width: 1.0,
+                          )),
                     ),
                   ],
                 ),
@@ -252,5 +294,27 @@ class ScreenOrdenTrabajo extends StatelessWidget {
     }
 
     return dispensarios;
+  }
+
+  Future<ReporteServicio?> _crearReporteServicio(
+      Dispensario disp, ReporteServicioProvider reporte, context) async {
+    var url = Uri.https(
+        'innovacion.dgl.com.mx', '/prueba/ezequiel/api/createReporte_Servicio');
+
+    var response = await http.post(url, body: {
+      'num_disp': disp.numeroDispensario.toString(),
+      'id_ot': disp.idOt.toString(),
+    });
+    ReporteServicio resp;
+    if (response.statusCode == 200) {
+      var res = json.decode(response.body);
+
+      ReporteServicio resp = ReporteServicio.fromJson(res);
+      reporte.reporteServicio = resp;
+
+      return resp;
+    } else {
+      return null;
+    }
   }
 }

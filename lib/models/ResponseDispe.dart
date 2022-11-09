@@ -39,19 +39,21 @@ class ResponseDispensarios {
 }
 
 class Dispensario {
-  Dispensario({
-    required this.idOt,
-    required this.qr,
-    required this.estatus,
-    required this.modelo,
-    required this.marca,
-    required this.mangueras,
-    required this.productos,
-    required this.flujo,
-    required this.numeroDispensario,
-    required this.serie,
-    required this.nombreEstacion,
-  });
+  Dispensario(
+      {required this.idOt,
+      required this.qr,
+      required this.estatus,
+      required this.modelo,
+      required this.marca,
+      required this.mangueras,
+      required this.productos,
+      required this.flujo,
+      required this.numeroDispensario,
+      required this.serie,
+      required this.nombreEstacion,
+      required this.rs,
+      required this.ri,
+      required this.be});
 
   int idOt;
   String qr;
@@ -64,23 +66,28 @@ class Dispensario {
   String numeroDispensario;
   String serie;
   String nombreEstacion;
+  String rs;
+  String ri;
+  String be;
 
   factory Dispensario.fromJson(Map<String, dynamic> json) => Dispensario(
-        idOt: json["id_ot"] == null ? null : json["id_ot"],
-        qr: json["qr"] == null ? null : json["qr"],
-        estatus: json["estatus"] == null ? null : json["estatus"],
-        modelo: json["modelo"] == null ? null : json["modelo"],
-        marca: json["marca"] == null ? null : json["marca"],
-        mangueras: json["mangueras"] == null ? null : json["mangueras"],
-        productos: json["productos"] == null ? null : json["productos"],
-        flujo: json["flujo"] == null ? null : json["flujo"],
-        numeroDispensario: json["numero_dispensario"] == null
-            ? null
-            : json["numero_dispensario"],
-        serie: json["serie"] == null ? null : json["serie"],
-        nombreEstacion:
-            json["nombre_estacion"] == null ? null : json["nombre_estacion"],
-      );
+      idOt: json["id_ot"] == null ? null : json["id_ot"],
+      qr: json["qr"] == null ? null : json["qr"],
+      estatus: json["estatus"] == null ? null : json["estatus"],
+      modelo: json["modelo"] == null ? null : json["modelo"],
+      marca: json["marca"] == null ? null : json["marca"],
+      mangueras: json["mangueras"] == null ? null : json["mangueras"],
+      productos: json["productos"] == null ? null : json["productos"],
+      flujo: json["flujo"] == null ? null : json["flujo"],
+      numeroDispensario: json["numero_dispensario"] == null
+          ? null
+          : json["numero_dispensario"],
+      serie: json["serie"] == null ? null : json["serie"],
+      nombreEstacion:
+          json["nombre_estacion"] == null ? null : json["nombre_estacion"],
+      rs: json["RS"] == null ? null : json["RS"],
+      ri: json["RI"] == null ? null : json["RI"],
+      be: json["BE"] == null ? null : json["BE"]);
 
   Map<String, dynamic> toJson() => {
         "id_ot": idOt == null ? null : idOt,
@@ -95,6 +102,9 @@ class Dispensario {
             numeroDispensario == null ? null : numeroDispensario,
         "serie": serie == null ? null : serie,
         "nombre_estacion": nombreEstacion == null ? null : nombreEstacion,
+        "rs": rs == null ? null : rs,
+        "ri": ri == null ? null : ri,
+        "be": be == null ? null : be
       };
 }
 

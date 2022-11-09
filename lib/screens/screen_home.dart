@@ -15,7 +15,7 @@ import 'package:verificacion/models/ResponseLogin.dart';
 import 'package:verificacion/providers/login_form_provider.dart';
 import 'package:verificacion/providers/ordenTrabajo_provider.dart';
 import 'package:verificacion/screens/screen_ordenTrabajo.dart';
-import 'package:webcontent_converter/webcontent_converter.dart';
+
 import 'package:dio/dio.dart';
 import 'package:open_file/open_file.dart';
 import 'package:http/http.dart' as http;
@@ -361,6 +361,7 @@ class ScreenHome extends StatelessWidget {
 
       var response = await http.post(url, body: {
         'qr': barcode,
+        'estacion': orden.idestacion.toString(),
         'id_ot': orden.idOt.toString(),
         'estatus': "EN PROCESO"
       });

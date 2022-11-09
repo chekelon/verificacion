@@ -3,6 +3,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:provider/provider.dart';
 import 'package:verificacion/providers/login_form_provider.dart';
 import 'package:verificacion/providers/ordenTrabajo_provider.dart';
+import 'package:verificacion/providers/reporte_servicio_provider.dart';
 import 'package:verificacion/screens/screen_RS.dart';
 import 'package:verificacion/screens/screen_home.dart';
 import 'package:verificacion/screens/screen_login.dart';
@@ -18,7 +19,8 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => LoginFormProvider()),
-        ChangeNotifierProvider(create: (_) => OrdenTrabajoProvider())
+        ChangeNotifierProvider(create: (_) => OrdenTrabajoProvider()),
+        ChangeNotifierProvider(create: (_) => ReporteServicioProvider())
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
