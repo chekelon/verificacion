@@ -93,32 +93,38 @@ class ScreenOrdenTrabajo extends StatelessWidget {
                               children: [
                                 GestureDetector(
                                   onTap: () async {
-                                    ReporteServicio? resp =
-                                        await _crearReporteServicio(
-                                            element, reporte, context);
-                                    if (resp!.status!) {
-                                      Navigator.of(context).pop();
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (_) =>
-                                                  ScreenRS(element)));
+                                    if (element.rs != "TERMINADA") {
+                                      ReporteServicio? resp =
+                                          await _crearReporteServicio(
+                                              element, reporte, context);
+
+                                      if (resp!.status!) {
+                                        Navigator.of(context).pop();
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (_) =>
+                                                    ScreenRS(element)));
+                                      } else {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                              backgroundColor: Colors.red,
+                                              content: Container(
+                                                height: 80,
+                                                child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.start,
+                                                  children: [
+                                                    Text('Ocurrio un error...')
+                                                  ],
+                                                ),
+                                              )),
+                                        );
+                                      }
                                     } else {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                            backgroundColor: Colors.red,
-                                            content: Container(
-                                              height: 80,
-                                              child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.start,
-                                                children: [
-                                                  Text('Ocurrio un error...')
-                                                ],
-                                              ),
-                                            )),
-                                      );
+                                      //IMPRIMIR REPORTE DE SERVICIO
+                                      print("IMPRIMIR REPORTE DE SERVICIO");
                                     }
                                   },
                                   child: Container(
@@ -127,7 +133,9 @@ class ScreenOrdenTrabajo extends StatelessWidget {
                                     child: Row(
                                       children: [
                                         Image.asset(
-                                          'assets/check-list.png',
+                                          element.rs == "TERMINADA"
+                                              ? 'assets/file.png'
+                                              : 'assets/check-list.png',
                                           width: 60,
                                           height: 60,
                                         ),
