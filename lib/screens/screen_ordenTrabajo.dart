@@ -1,8 +1,15 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import 'package:path/path.dart';
 import 'package:verificacion/models/ResponseDispe.dart';
 import 'package:verificacion/models/ResponseReporteRS.dart';
 import 'package:verificacion/providers/reporte_servicio_provider.dart';
@@ -123,6 +130,26 @@ class ScreenOrdenTrabajo extends StatelessWidget {
                                         );
                                       }
                                     } else {
+                                      /*ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                            backgroundColor: Colors.green,
+                                            content: Container(
+                                              height: 80,
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                children: [
+                                                  Text('Descargando PDF...')
+                                                ],
+                                              ),
+                                            )),
+                                      );*/
+                                      ReporteServicio? resp =
+                                          await _crearReporteServicio(
+                                              element, reporte, context);
+                                      await _descargarReporteServicio(
+                                          element, resp!);
                                       //IMPRIMIR REPORTE DE SERVICIO
                                       print("IMPRIMIR REPORTE DE SERVICIO");
                                     }
@@ -324,5 +351,92 @@ class ScreenOrdenTrabajo extends StatelessWidget {
     } else {
       return null;
     }
+  }
+
+  Future<bool> _requestPermission(Permission permission) async {
+    if (await permission.isGranted) {
+      return true;
+    } else {
+      var result = await permission.request();
+      if (result == PermissionStatus.granted) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+
+  Future<bool> _descargarReporteServicio(
+      Dispensario disp, ReporteServicio reporte) async {
+    Directory directory;
+
+    try {
+      if (Platform.isAndroid) {
+        //Android
+        if (await _requestPermission(Permission.storage)) {
+          directory = (await getExternalStorageDirectory())!;
+          print(directory.path);
+          String newPath = "";
+
+          ///storage/emulated/0/Android/data/com.example.verificacion/files
+          List<String> folders = directory.path.split("/");
+          for (var i = 1; i < folders.length; i++) {
+            String folder = folders[i];
+            if (folder != "Android") {
+              newPath += "/" + folder;
+            } else {
+              break;
+            }
+          }
+          newPath = newPath + "/Verificacion/ReporteServicio";
+          directory = Directory(newPath);
+          EasyLoading.show(
+              status: 'Descargando', maskType: EasyLoadingMaskType.black);
+          print(directory.path);
+        } else {
+          return false;
+        }
+      } else {
+        //IOS
+        if (await _requestPermission(Permission.photos)) {
+          directory = (await getExternalStorageDirectory())!;
+        } else {
+          return false;
+        }
+      }
+
+      if (!await directory.exists()) {
+        await directory.create(recursive: true);
+      }
+      if (await directory.exists()) {
+        File saveFile = File(directory.path);
+
+        var fecha = DateTime.now();
+
+        var savePath = join(saveFile.path,
+            "${fecha.day}-${fecha.month}-${fecha.year} ${fecha.hour}:${fecha.minute}_RS.pdf");
+
+        var response = await Dio().download(
+          'https://innovacion.dgl.com.mx/prueba/ezequiel/Reportes/print_reporteSrv/${reporte.idOt}/${reporte.numeroDispensario}',
+          savePath,
+          onReceiveProgress: (count, total) {
+            if (count / total == 1.0) {
+              EasyLoading.showSuccess('Listo',
+                  maskType: EasyLoadingMaskType.black);
+            } else {
+              EasyLoading.showProgress(count / total,
+                  maskType: EasyLoadingMaskType.black);
+            }
+          },
+        );
+
+        OpenFile.open(savePath);
+        if (Platform.isIOS) {
+          await ImageGallerySaver.saveFile(savePath);
+        }
+        return true;
+      }
+    } catch (e) {}
+    return false;
   }
 }

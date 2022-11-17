@@ -228,6 +228,7 @@ class ScreenRS extends StatelessWidget {
                       Container(
                         padding: EdgeInsets.all(10),
                         child: TextFormField(
+                          initialValue: reporte.reporteServicio.diagnostico,
                           onChanged: (value) {
                             reporte.diagnostico = value;
                           },
