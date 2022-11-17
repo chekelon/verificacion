@@ -178,20 +178,28 @@ class ScreenOrdenTrabajo extends StatelessWidget {
                                   height: 10,
                                 ),
                                 GestureDetector(
-                                  onTap: () {
-                                    Navigator.of(context).pop();
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (_) => ScreenBE()));
-                                  },
+                                  onTap: element.rs == "TERMINADA"
+                                      ? () async {
+                                          ReporteServicio? resp =
+                                              await _crearReporteServicio(
+                                                  element, reporte, context);
+                                          await _descargarBitacoraEventos(
+                                              element, resp!);
+                                          //IMPRIMIR REPORTE DE SERVICIO
+                                          print("IMPRIMIR BITACORA DE EVENTOS");
+                                        }
+                                      : () {
+                                          print("bitacora de eventos");
+                                        },
                                   child: Container(
                                     decoration:
                                         BoxDecoration(color: Colors.grey[100]),
                                     child: Row(
                                       children: [
                                         Image.asset(
-                                          'assets/check-list.png',
+                                          element.rs == "TERMINADA"
+                                              ? 'assets/file.png'
+                                              : 'assets/check-list.png',
                                           width: 60,
                                           height: 60,
                                         ),
@@ -291,7 +299,11 @@ class ScreenOrdenTrabajo extends StatelessWidget {
                       child: Text("BE"),
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5),
-                          color: Colors.white,
+                          color: element.rs == "PENDIENTE"
+                              ? Colors.white
+                              : element.rs == "EN PROCESO"
+                                  ? Colors.amber
+                                  : Colors.green,
                           border: Border.all(
                             width: 1.0,
                           )),
@@ -418,6 +430,80 @@ class ScreenOrdenTrabajo extends StatelessWidget {
 
         var response = await Dio().download(
           'https://innovacion.dgl.com.mx/prueba/ezequiel/Reportes/print_reporteSrv/${reporte.idOt}/${reporte.numeroDispensario}',
+          savePath,
+          onReceiveProgress: (count, total) {
+            if (count / total == 1.0) {
+              EasyLoading.showSuccess('Listo',
+                  maskType: EasyLoadingMaskType.black);
+            } else {
+              EasyLoading.showProgress(count / total,
+                  maskType: EasyLoadingMaskType.black);
+            }
+          },
+        );
+
+        OpenFile.open(savePath);
+        if (Platform.isIOS) {
+          await ImageGallerySaver.saveFile(savePath);
+        }
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  _descargarBitacoraEventos(
+      Dispensario element, ReporteServicio reporte) async {
+    Directory directory;
+
+    try {
+      if (Platform.isAndroid) {
+        //Android
+        if (await _requestPermission(Permission.storage)) {
+          directory = (await getExternalStorageDirectory())!;
+          print(directory.path);
+          String newPath = "";
+
+          ///storage/emulated/0/Android/data/com.example.verificacion/files
+          List<String> folders = directory.path.split("/");
+          for (var i = 1; i < folders.length; i++) {
+            String folder = folders[i];
+            if (folder != "Android") {
+              newPath += "/" + folder;
+            } else {
+              break;
+            }
+          }
+          newPath = newPath + "/Verificacion/BitacoraEventos";
+          directory = Directory(newPath);
+          EasyLoading.show(
+              status: 'Descargando', maskType: EasyLoadingMaskType.black);
+          print(directory.path);
+        } else {
+          return false;
+        }
+      } else {
+        //IOS
+        if (await _requestPermission(Permission.photos)) {
+          directory = (await getExternalStorageDirectory())!;
+        } else {
+          return false;
+        }
+      }
+
+      if (!await directory.exists()) {
+        await directory.create(recursive: true);
+      }
+      if (await directory.exists()) {
+        File saveFile = File(directory.path);
+
+        var fecha = DateTime.now();
+
+        var savePath = join(saveFile.path,
+            "${fecha.day}-${fecha.month}-${fecha.year} ${fecha.hour}:${fecha.minute}_BE.pdf");
+
+        var response = await Dio().download(
+          'https://innovacion.dgl.com.mx/prueba/ezequiel/Reportes/print_bitacora_eventos/${reporte.idOt}/${reporte.numeroDispensario}',
           savePath,
           onReceiveProgress: (count, total) {
             if (count / total == 1.0) {
