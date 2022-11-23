@@ -1,12 +1,8 @@
-import 'dart:convert';
-
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:verificacion/models/ResponseDispe.dart';
 import 'package:verificacion/providers/ordenTrabajo_provider.dart';
-import 'package:verificacion/providers/reporte_servicio_provider.dart';
-import 'package:http/http.dart' as http;
 
 class ScreenRS extends StatelessWidget {
   Dispensario dispensario;
@@ -19,16 +15,6 @@ class ScreenRS extends StatelessWidget {
     double height = MediaQuery.of(context).size.height;
     OrdenTrabajoProvider OrdenT = Provider.of<OrdenTrabajoProvider>(context);
     DateTime tiempo = DateTime.now();
-    ReporteServicioProvider reporte =
-        Provider.of<ReporteServicioProvider>(context);
-
-    DateTime timeInicio =
-        DateTime.parse(reporte.reporteServicio.fechaCreacion!);
-    var horaInicio = timeInicio.hour;
-    var minInicio = timeInicio.minute;
-    /*DateTime timeFin = DateTime.parse(reporte.reporteServicio.fechaTermindada!);
-    var horaFin = timeFin.hour;
-    var minFin = timeFin.minute;*/
 
     return SafeArea(
       child: Scaffold(
@@ -55,37 +41,6 @@ class ScreenRS extends StatelessWidget {
                     ),
                     SizedBox(
                       height: 10,
-                    ),
-                    Container(
-                      padding: EdgeInsets.only(
-                        right: 10.0,
-                      ),
-                      margin: EdgeInsets.only(left: width * .55),
-                      alignment: Alignment.topRight,
-                      width: width * .3,
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.all(Radius.circular(5)),
-                          border: Border.all(width: 1)),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            "Folio",
-                            style: TextStyle(
-                                fontSize: 15, fontWeight: FontWeight.bold),
-                          ),
-                          SizedBox(
-                            width: 5,
-                          ),
-                          Text(
-                            "${reporte.reporteServicio.folio}",
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                     Text("${OrdenT.estacion.nombreOpt}"),
                     Text("${OrdenT.estacion.rs}"),
@@ -131,11 +86,7 @@ class ScreenRS extends StatelessWidget {
                               child: DateTimePicker(
                                 type: DateTimePickerType.date,
                                 dateMask: 'd, MMM, yyyy',
-                                initialValue:
-                                    reporte.reporteServicio.fechaCreacion !=
-                                            null
-                                        ? reporte.reporteServicio.fechaCreacion
-                                        : DateTime.now().toString(),
+                                initialValue: DateTime.now().toString(),
                                 firstDate: DateTime(2022),
                                 lastDate: DateTime(2023),
                                 readOnly: true,
@@ -168,11 +119,7 @@ class ScreenRS extends StatelessWidget {
                               child: DateTimePicker(
                                 type: DateTimePickerType.time,
                                 dateMask: 'hh:mm',
-                                initialValue:
-                                    reporte.reporteServicio.fechaCreacion !=
-                                            null
-                                        ? "$horaInicio:$minInicio"
-                                        : "",
+                                initialValue: '',
                                 firstDate: DateTime(2022),
                                 lastDate: DateTime(2023),
                                 readOnly: true,
@@ -192,9 +139,7 @@ class ScreenRS extends StatelessWidget {
                                   }
                                   return true;
                                 },
-                                onChanged: (value) {
-                                  print("Changed  $value");
-                                },
+                                onChanged: (value) => print("Changed  $value"),
                                 validator: ((value) {
                                   print("validator $value");
                                   return null;
@@ -228,10 +173,6 @@ class ScreenRS extends StatelessWidget {
                       Container(
                         padding: EdgeInsets.all(10),
                         child: TextFormField(
-                          initialValue: reporte.reporteServicio.diagnostico,
-                          onChanged: (value) {
-                            reporte.diagnostico = value;
-                          },
                           decoration: InputDecoration(
                               fillColor: Colors.grey[200],
                               filled: true,
@@ -263,11 +204,7 @@ class ScreenRS extends StatelessWidget {
                                 child: DateTimePicker(
                                   type: DateTimePickerType.date,
                                   dateMask: 'd, MMM, yyyy',
-                                  initialValue: reporte.reporteServicio
-                                              .fechaTermindada !=
-                                          null
-                                      ? reporte.reporteServicio.fechaTermindada
-                                      : DateTime.now().toString(),
+                                  initialValue: DateTime.now().toString(),
                                   firstDate: DateTime(2022),
                                   lastDate: DateTime(2023),
                                   readOnly: true,
@@ -299,20 +236,17 @@ class ScreenRS extends StatelessWidget {
                                     print("validator $value");
                                     return null;
                                   }),
-                                  onSaved: ((newValue) {
-                                    print("Saved : ${newValue}");
-                                    reporte.fechaTerminada = newValue!;
-                                  }),
+                                  onSaved: ((newValue) =>
+                                      print("Saved : ${newValue}")),
                                 )),
                             Container(
                                 width: width * .35,
                                 child: DateTimePicker(
                                   type: DateTimePickerType.time,
                                   dateMask: 'hh:mm:s',
-                                  initialValue: /* horaFin.toString() +
-                                      ":" +
-                                      minFin.toString()*/
-                                      "",
+                                  /* initialValue: tiempo.hour.toString() +
+                                  ":" +
+                                  tiempo.minute.toString(), */
                                   firstDate: DateTime(2022),
                                   lastDate: DateTime(2023),
                                   decoration: InputDecoration(
@@ -338,10 +272,8 @@ class ScreenRS extends StatelessWidget {
                                     print("validator $value");
                                     return null;
                                   }),
-                                  onSaved: ((newValue) {
-                                    print("Saved : ${newValue}");
-                                    reporte.horaTerminada = newValue!;
-                                  }),
+                                  onSaved: ((newValue) =>
+                                      print("Saved : ${newValue}")),
                                 ))
                           ],
                         ),
@@ -365,28 +297,7 @@ class ScreenRS extends StatelessWidget {
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(25)),
                               elevation: 10,
-                              onLongPress: () async {
-                                var res = await _guardar(
-                                  reporte.diagnostico,
-                                  reporte.reporteServicio.idOt!,
-                                  reporte.reporteServicio.numeroDispensario!,
-                                );
-
-                                if (res) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        backgroundColor: Colors.green,
-                                        content:
-                                            Text("Se guardo correctamente...")),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        backgroundColor: Colors.red,
-                                        content: Text("No se pudo guardar...")),
-                                  );
-                                }
-                              },
+                              onLongPress: () {},
                               onPressed: () {},
                             ),
                             MaterialButton(
@@ -398,27 +309,7 @@ class ScreenRS extends StatelessWidget {
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(25)),
                               elevation: 10,
-                              onLongPress: () async {
-                                var res = await _guardarTerminado(
-                                    reporte.diagnostico,
-                                    reporte.reporteServicio.idOt!,
-                                    reporte.reporteServicio.numeroDispensario!);
-
-                                if (res) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        backgroundColor: Colors.green,
-                                        content:
-                                            Text("Se guardo correctamente...")),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        backgroundColor: Colors.red,
-                                        content: Text("No se pudo guardar...")),
-                                  );
-                                }
-                              },
+                              onLongPress: () {},
                               onPressed: () {},
                             )
                           ],
@@ -433,55 +324,5 @@ class ScreenRS extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Future<bool> _guardar(
-      String diagnostico, String id_ot, int numero_dispensario) async {
-    print("Guardar: $diagnostico ");
-    print("Guardar: $id_ot-$numero_dispensario");
-
-    var url = Uri.https('innovacion.dgl.com.mx',
-        '/prueba/ezequiel/api/guardarReporte_Servicio');
-
-    var response = await http.post(url, body: {
-      'num_disp': numero_dispensario.toString(),
-      'id_ot': id_ot,
-      'diagnostico': diagnostico
-    });
-
-    if (response.statusCode == 200) {
-      var res = json.decode(response.body);
-      if (res['estatus']) {
-        return true;
-      } else {
-        return false;
-      }
-    } else {
-      return false;
-    }
-  }
-
-  Future<bool> _guardarTerminado(
-      String diagnostico, String id_ot, int numero_dispensario) async {
-    var url = Uri.https('innovacion.dgl.com.mx',
-        '/prueba/ezequiel/api/guardarReporte_Servicio');
-
-    var response = await http.post(url, body: {
-      'num_disp': numero_dispensario.toString(),
-      'id_ot': id_ot,
-      'diagnostico': diagnostico,
-      'fechaTerminada': DateTime.now().toString()
-    });
-
-    if (response.statusCode == 200) {
-      var res = json.decode(response.body);
-      if (res['estatus']) {
-        return true;
-      } else {
-        return false;
-      }
-    } else {
-      return false;
-    }
   }
 }
