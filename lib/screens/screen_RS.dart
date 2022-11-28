@@ -1,13 +1,19 @@
+import 'dart:convert';
+
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:verificacion/models/ResponseDispe.dart';
+import 'package:verificacion/models/ResponseReporteRS.dart';
 import 'package:verificacion/providers/ordenTrabajo_provider.dart';
+
+import 'package:http/http.dart' as http;
 
 class ScreenRS extends StatelessWidget {
   Dispensario dispensario;
+  ResponseReporteRs reporte;
 
-  ScreenRS(this.dispensario);
+  ScreenRS(this.dispensario, this.reporte);
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +21,9 @@ class ScreenRS extends StatelessWidget {
     double height = MediaQuery.of(context).size.height;
     OrdenTrabajoProvider OrdenT = Provider.of<OrdenTrabajoProvider>(context);
     DateTime tiempo = DateTime.now();
+    String diagnostico = reporte.diagnostico.toString();
+    var horaCreacion =
+        "${reporte.fechaCreacion!.hour}:${reporte.fechaCreacion!.minute}";
 
     return SafeArea(
       child: Scaffold(
@@ -47,26 +56,59 @@ class ScreenRS extends StatelessWidget {
                     SizedBox(
                       height: 10,
                     ),
-                    Container(
-                      padding: EdgeInsets.all(10),
-                      //color: Colors.grey,
-                      width: width,
-                      height: (height * .3) * .35,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Dispensario ${dispensario.numeroDispensario}",
-                            style: TextStyle(fontWeight: FontWeight.w900),
+                    Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(10),
+                          //color: Colors.grey,
+                          width: width * .45,
+                          height: (height * .3) * .35,
+
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Dispensario ${dispensario.numeroDispensario}",
+                                style: TextStyle(fontWeight: FontWeight.w900),
+                              ),
+                              SizedBox(
+                                height: 5,
+                              ),
+                              Text("Marca: ${dispensario.marca} "),
+                              Text("Modelo: ${dispensario.modelo}"),
+                              Text("Serie: ${dispensario.serie}")
+                            ],
                           ),
-                          SizedBox(
-                            height: 5,
+                        ),
+                        Container(
+                          padding: EdgeInsets.all(10),
+                          //color: Colors.grey,
+                          width: width * .45,
+                          height: (height * .3) * .35,
+
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Folio",
+                                style: TextStyle(fontWeight: FontWeight.w900),
+                              ),
+                              SizedBox(
+                                height: 5,
+                              ),
+                              Text(
+                                reporte.folio,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  backgroundColor: Colors.black,
+                                ),
+                              ),
+                            ],
                           ),
-                          Text("Marca: ${dispensario.marca} "),
-                          Text("Modelo: ${dispensario.modelo}"),
-                          Text("Serie: ${dispensario.serie}")
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                     Container(
                       alignment: Alignment.center,
@@ -119,7 +161,7 @@ class ScreenRS extends StatelessWidget {
                               child: DateTimePicker(
                                 type: DateTimePickerType.time,
                                 dateMask: 'hh:mm',
-                                initialValue: '',
+                                initialValue: horaCreacion,
                                 firstDate: DateTime(2022),
                                 lastDate: DateTime(2023),
                                 readOnly: true,
@@ -173,6 +215,7 @@ class ScreenRS extends StatelessWidget {
                       Container(
                         padding: EdgeInsets.all(10),
                         child: TextFormField(
+                          initialValue: reporte.diagnostico,
                           decoration: InputDecoration(
                               fillColor: Colors.grey[200],
                               filled: true,
@@ -184,6 +227,11 @@ class ScreenRS extends StatelessWidget {
                               focusedBorder: InputBorder.none,
                               label: Text("Diagnostico y servicio realizado ")),
                           maxLines: 15,
+                          onChanged: (value) {
+                            if (value != null) {
+                              reporte.diagnostico = value;
+                            }
+                          },
                         ),
                       ),
                       Container(
@@ -297,7 +345,26 @@ class ScreenRS extends StatelessWidget {
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(25)),
                               elevation: 10,
-                              onLongPress: () {},
+                              onLongPress: () async {
+                                var res =
+                                    await _guardarReporte(reporte, diagnostico);
+
+                                if (res) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        backgroundColor: Colors.green,
+                                        content:
+                                            Text("Se guardo correctamnte")),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        backgroundColor: Colors.red,
+                                        content: Text(
+                                            "Algo paso !, no se pudo guardar..")),
+                                  );
+                                }
+                              },
                               onPressed: () {},
                             ),
                             MaterialButton(
@@ -309,7 +376,26 @@ class ScreenRS extends StatelessWidget {
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(25)),
                               elevation: 10,
-                              onLongPress: () {},
+                              onLongPress: () async {
+                                var res = await _guardarReporte(
+                                    reporte, diagnostico, true);
+
+                                if (res) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        backgroundColor: Colors.green,
+                                        content:
+                                            Text("Se guardo correctamnte")),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        backgroundColor: Colors.red,
+                                        content: Text(
+                                            "Algo paso !, no se pudo guardar..")),
+                                  );
+                                }
+                              },
                               onPressed: () {},
                             )
                           ],
@@ -324,5 +410,40 @@ class ScreenRS extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<bool> _guardarReporte(reporte, diagnostico,
+      [bool fecha = false]) async {
+    var url = Uri.https('innovacion.dgl.com.mx',
+        '/prueba/ezequiel/api/guardarReporte_Servicio');
+
+    if (fecha) {
+      var response = await http.post(url, body: {
+        'num_disp': reporte.numeroDispensario.toString(),
+        'id_ot': reporte.idOt.toString(),
+        'diagnostico': diagnostico.toString(),
+        'fechaTerminada': DateTime.now().toString()
+      });
+
+      if (response.statusCode == 200) {
+        var resp = json.decode(response.body);
+
+        return resp['estatus'];
+      }
+    } else {
+      var response = await http.post(url, body: {
+        'num_disp': reporte.numeroDispensario.toString(),
+        'id_ot': reporte.idOt.toString(),
+        'diagnostico': diagnostico.toString(),
+      });
+
+      if (response.statusCode == 200) {
+        var resp = json.decode(response.body);
+
+        return resp['estatus'];
+      }
+    }
+
+    return false;
   }
 }
